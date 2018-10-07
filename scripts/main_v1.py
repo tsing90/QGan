@@ -11,9 +11,10 @@ src_cut_end = 25
 src_name = 'source.mp4'
 tar_name = 'target.mp4'
 
-# image reshape
+# image reshape: ATTENTION: make sure final shape is divisible by 32 or 16
+# all size are in format (width, height)
 src_size_dst = (512, 288)  # final shape after scaling with fixed aspect ratio
-src_size_crop = (640, 360)  # intermediate size after crop
+src_size_crop = (640, 360)  # intermediate size after crop/padding
 src_crop_from = 'central'  # how to crop images
 
 tar_size_dst = (512, 288)

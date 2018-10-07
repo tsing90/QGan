@@ -43,7 +43,7 @@ def generate(origin_img, img_dir, label_dir, size_dst, size_crop, crop_from, pos
         for img_path in imgset:
             img = cv2.imread(str(img_path))
             if not img.shape[:2] == size_dst[::-1]:  # format: (h, w)
-                img = img_resize(img, size_crop, crop_from, size_dst)  # size format: (W, H)
+                img = img_resize(img, size_crop, crop_from, size_dst)  # size_dst format: (W, H)
             multiplier = get_multiplier(img)
             with torch.no_grad():
                 paf, heatmap = get_outputs(multiplier, img, model, 'rtpose')
@@ -140,17 +140,36 @@ def pose_model():
 
 def img_resize(img, crop_size, crop_from, dst_size):
 
-    if not img.shape[0]/img.shape[1] == dst_size[1]/dst_size[0]:
+    # img: (Height, Width); crop_size: (Width, Height)
 
-        if crop_from == 'central':
-        # crop | crop_size = (width, height)
-            oh = (img.shape[0] - crop_size[1]) // 2
-            ow = (img.shape[1] - crop_size[0]) // 2
-            img = img[oh:oh + crop_size[1], ow:ow + crop_size[0]]
-        elif crop_from == 'top':
-            oh = img.shape[0] - crop_size[1]
-            ow = (img.shape[1] - crop_size[0]) // 2
-            img = img[oh:oh + crop_size[1], ow:ow + crop_size[0]]
+    if not img.shape[0]/img.shape[1] == dst_size[1]/dst_size[0]:
+        # padding
+        if crop_size[0]>img.shape[1] or crop_size[1]>img.shape[0]:
+
+            if crop_size[0]>img.shape[1]:
+                pad_width = (crop_size[0] - img.shape[1])//2
+                if crop_from == 'central':
+                    img = cv2.copyMakeBorder(img, 0, 0, pad_width, pad_width, cv2.BORDER_CONSTANT)
+                elif crop_from == 'left':
+                    img = cv2.copyMakeBorder(img, 0, 0, 2*pad_width, 0, cv2.BORDER_CONSTANT)
+            elif crop_size[1] > img.shape[0]:
+                pad_height = (crop_size[1] - img.shape[0])//2
+                if crop_from == 'central':
+                    img = cv2.copyMakeBorder(img, pad_height, pad_height, 0, 0, cv2.BORDER_CONSTANT)
+                elif crop_from == 'top':
+                    img = cv2.copyMakeBorder(img, 2*pad_height, 0, 0, 0, cv2.BORDER_CONSTANT)
+
+        # crop
+        else:
+            if crop_from == 'central':
+            # crop | crop_size = (width, height)
+                oh = (img.shape[0] - crop_size[1]) // 2
+                ow = (img.shape[1] - crop_size[0]) // 2
+                img = img[oh:oh + crop_size[1], ow:ow + crop_size[0]]
+            elif crop_from == 'top':
+                oh = img.shape[0] - crop_size[1]
+                ow = (img.shape[1] - crop_size[0]) // 2
+                img = img[oh:oh + crop_size[1], ow:ow + crop_size[0]]
 
     # resize | dst_size = (width, height)
     img = cv2.resize(img, dst_size)  # resolution setting
