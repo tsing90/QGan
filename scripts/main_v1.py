@@ -6,9 +6,9 @@ from pathlib import Path
 
 # cut video
 src_cut_video = False  # whether cut video
-src_cut_start = 5  # in seconds
-src_cut_end = 25
-src_name = 'source.mp4'
+src_cut_start = 0  # in seconds
+src_cut_end = 20
+src_name = 'source_0_20.mp4'
 tar_name = 'target.mp4'
 
 # image reshape: ATTENTION: make sure final shape is divisible by 32 or 16
@@ -23,7 +23,7 @@ tar_crop_from = 'central'
 
 # training and inferencing
 loadSize = 512  # load image's width, we set it equal to fineSize (after crop and scale)
-continue_train = True  # load saved train model parameters, resume training
+continue_train = False  # load saved train model parameters, resume training
 inference_only = False  # if true: without train, do inference ONLY !
 
 # output video
@@ -38,11 +38,14 @@ source_dir.mkdir(exist_ok=True)
 source_img_dir = source_dir.joinpath('images')
 source_img_dir.mkdir(exist_ok=True)
 
+if not source_dir.joinpath(src_name).is_file():
+    raise ValueError('source video is missing!')
+    
 #img_process.download(source_dir)  # download source video
 if src_cut_video:
     src_output_dir = str(source_dir)+'/source_'+str(src_cut_start)+'_'+str(src_cut_end)+'.mp4'
-    src_name = 'source_'+str(src_cut_start)+'_'+str(src_cut_end)+'.mp4'
     img_process.cutmv(source_dir.joinpath(src_name), src_output_dir, src_cut_start, src_cut_end)
+    src_name = 'source_' + str(src_cut_start) + '_' + str(src_cut_end) + '.mp4'
 
 img_process.mv2img(source_dir, source_img_dir, src_name)  # transform video to images
 
@@ -53,6 +56,8 @@ target_dir.mkdir(exist_ok=True)
 target_img_dir = target_dir.joinpath('images')
 target_img_dir.mkdir(exist_ok=True)
 
+if not target_dir.joinpath(tar_name).is_file():
+    raise ValueError('target video is missing!')
 img_process.mv2img(target_dir, target_img_dir, tar_name)  #
 
 
@@ -67,7 +72,13 @@ test_label_dir.mkdir(exist_ok=True)
 if len(list(test_img_dir.iterdir()))!=0 and len(list(test_label_dir.iterdir()))!=0:
     print ('source labels were already generated!')
 else:
-    pose_transform = True  # need to be True
+    pose_transform = True  # need to be True: make sure you've set up 'ratio_a.png'
+    ratio_src, ratio_tar = Path('../data/source/ratio_a.png'), Path('../data/target/ratio_b.png')
+    if not ratio_src.is_file():
+        raise TypeError('Directory not exists: {}'.format(ratio_src))
+    if not ratio_tar.is_file():
+        raise TypeError('Directory not exists: {}'.format(ratio_tar))
+    
     pose_generate.generate(source_img_dir, test_img_dir, test_label_dir, \
                            src_size_dst, src_size_crop, src_crop_from, pose_transform)
 
