@@ -8,6 +8,11 @@ from pathlib import Path
 src_cut_video = False  # whether cut video
 src_cut_start = 0  # in seconds
 src_cut_end = 20
+
+tar_cut_video = True  # whether cut video
+tar_cut_start = 15  # in seconds
+tar_cut_end = 62
+
 src_name = 'source_0_20.mp4'
 tar_name = 'target.mp4'
 
@@ -58,6 +63,12 @@ target_img_dir.mkdir(exist_ok=True)
 
 if not target_dir.joinpath(tar_name).is_file():
     raise ValueError('target video is missing!')
+    
+if tar_cut_video:
+    tar_output_dir = str(target_dir)+'/target_'+str(tar_cut_start)+'_'+str(tar_cut_end)+'.mp4'
+    img_process.cutmv(target_dir.joinpath(tar_name), tar_output_dir, tar_cut_start, tar_cut_end)
+    tar_name = 'target_'+str(tar_cut_start)+'_'+str(tar_cut_end)+'.mp4'
+    
 img_process.mv2img(target_dir, target_img_dir, tar_name)  #
 
 
